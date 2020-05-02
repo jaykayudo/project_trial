@@ -1,0 +1,282 @@
+# Game created with Pygame (BLOCK DODGE)
+import pygame
+import random
+import sys
+import time
+pygame.init()
+# Game crash effect
+crash_sound = pygame.mixer.Sound("crash_x.wav")
+# Game music
+pygame.mixer.music.load("ChillingMusic.wav")
+# width of pygame window
+width = 800
+# height of pygame window
+height = 600
+player_size = 50
+score = 0
+gray = (192,192,192)
+player_pos = [width/2,height-2*player_size]
+background_color = (11,238,207)
+black = (0,0,0)
+bright_green = (0,255,0)
+bright_red = (255,0,0)
+
+enemy_size = 50
+enemy_pos = [random.randint(0,width-enemy_size),0]
+enemy_list = [enemy_pos]
+blue = (128,0,0)
+speed = 10
+green = (0,51,0)
+
+# setting pygame window
+screen = pygame.display.set_mode((width,height))
+# caption on the screen
+pygame.display.set_caption("BLOCK DOGDE")
+icon = pygame.image.load("icon2.png")
+# icon on the screen
+pygame.display.set_icon(icon)
+
+# for setting game score
+def set_level(score,speed):
+    speed = (score/10) + 5
+    return speed
+  
+# for dropping multiple enemies
+def drop_enemies(enemy_list):
+    delay = random.random();
+    if len(enemy_list) < 10 and delay < 0.1:
+        x_pos = random.randint(0,width-enemy_size)
+        y_pos = 0
+        enemy_list.append([x_pos,y_pos])
+        
+# for enemy movement and score setting
+def update_enemy_positions(enemy_list, score):
+    for idx,enemy_pos in enumerate(enemy_list):
+        if enemy_pos[1]>=0 and enemy_pos[1]< height:
+            enemy_pos[1]+=speed
+        else:
+            enemy_list.pop(idx)
+            score +=1
+    return score
+    
+# for checking whether player collided with an enemy
+def collision_check(enemy_list,player_pos):
+    for enemy_pos in enemy_list:
+        if collision(player_pos,enemy_pos):
+            return True
+    return False
+
+# for drawing enemies
+def draw_enemy(enemy_list):
+    for enemy_pos in enemy_list:
+        pygame.draw.rect(screen,blue,(enemy_pos[0],enemy_pos[1],enemy_size,enemy_size)) 
+
+    
+# for detecting collision and creating event during collision
+def collision(player_pos,enemy_pos):
+    p_x = player_pos[0]
+    p_y = player_pos[1]
+
+    e_x = enemy_pos[0]
+    e_y =enemy_pos[1]
+
+    if (e_x >= p_x and e_x < (p_x + player_size)) or (p_x >= e_x and p_x < (e_x + enemy_size)):
+        if (e_y >= p_y and e_y < (p_y + player_size)) or (p_y >= e_y and p_y < (e_y + enemy_size)):
+            return True
+    return False
+# for setting text format
+def text_objects(text,font):
+    Textsurface = font.render(text,True,black)
+    return Textsurface, Textsurface.get_rect()
+ 
+# for setting the text styles and writing the text
+def message(text):
+    largetext = pygame.font.Font("freesansbold.ttf",130)
+    Textsurf, Textrect = text_objects(text,largetext)
+    Textrect.center = ((width/2,height/2))
+    screen.blit(Textsurf,Textrect)
+    pygame.display.update()
+
+    time.sleep(3)
+    game_over = True
+# events to happen after colliding with enemy
+def crashed():
+    pygame.mixer.music.pause()
+    pygame.mixer.Sound.play(crash_sound)
+    message("Game Over")
+ # event to happen after colliding with the wall
+def crashed2():
+    pygame.mixer.music.pause()
+    pygame.mixer.Sound.play(crash_sound)
+    message("You Crashed")
+
+
+pause = False
+# event to occur during unpausing the game 
+def unpause():
+    pygame.mixer.music.unpause()
+    global pause
+    pause = True
+#pausing the game
+def paused():
+    pygame.mixer.music.pause()
+    clock = pygame.time.Clock()
+    while not pause:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        #screen.fill(background_color)
+        
+        largetext = pygame.font.SysFont("freesansbold.ttf",108)
+        Textsurf, Textrect = text_objects("PAUSED",largetext)
+        Textrect.center = ((width/2,(height/2)-100))
+        screen.blit(Textsurf,Textrect)
+
+        buttons("Continue",150,400,100,50,green,bright_green,"pause")
+        buttons("Quit",550,400,100,50,blue,bright_red,"quit")
+        
+
+        pygame.display.update()
+        clock.tick()
+
+
+
+# buttons event in the game
+def buttons(mag,x,y,w,h,ic,ac,action=None):
+    mouse = pygame.mouse.get_pos()
+    click = pygame.mouse.get_pressed() 
+    if x+w>mouse[0] > x and y+h >mouse[1]>y:
+        pygame.draw.rect(screen,ac,(x,y,w,h))
+        if click[0] == 1 and action !=None:
+    
+            if action == "play":
+                game()
+            if action == "pause":
+                unpause()
+
+            if action == "quit":
+                sys.exit()
+    else:
+        pygame.draw.rect(screen,ic,(x,y,w,h))
+                
+    smalltext = pygame.font.SysFont("freesansbold.ttf",30)
+    Textsurf, Textrect = text_objects(mag,smalltext)
+    Textrect.center = (((x+(w/2)),(y+(h/2))))
+    screen.blit(Textsurf,Textrect)  
+        
+# game intro screen
+def game_intro():
+    intro = False
+    clock = pygame.time.Clock()
+    pygame.mixer.music.unpause()
+    while not intro:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        screen.fill(background_color)
+        
+        largetext = pygame.font.SysFont("freesansbold.ttf",108)
+        Textsurf, Textrect = text_objects("BLOCK DOGDE",largetext)
+        Textrect.center = ((width/2,(height/2)-100))
+        screen.blit(Textsurf,Textrect)
+
+        buttons("Play",150,400,100,50,green,bright_green,"play")
+        buttons("Quit",550,400,100,50,blue,bright_red,"quit")
+        
+
+        pygame.display.update()
+        clock.tick(15)
+
+
+# Game loop and Game play/ main Method
+def game():
+    pygame.mixer.music.play(-1)
+    global crashed2
+    global crashed
+    global speed
+    player_size = 50
+    score = 0
+    player_pos = [width/2,height-2*player_size]
+    global pause
+    game_over = False
+    enemy_size = 50
+    enemy_pos = [random.randint(0,width-enemy_size),0]
+    enemy_list = [enemy_pos]
+    clock = pygame.time.Clock()
+    myfont = pygame.font.SysFont("monospace",35)
+    while not game_over:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                x = player_pos[0]
+                y = player_pos[1]
+
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    # Player movement
+                    x-=player_size
+
+                if event.key == pygame.K_RIGHT  or event.key == pygame.K_d:
+                    x+=player_size
+                if event.key == pygame.K_p:
+                    pause = False
+                    paused()
+
+                
+
+                                    
+
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                    x+= 0
+
+                player_pos =[x,y]
+        if player_pos[0] > width-50 or player_pos[0]<0:
+
+            crashed2()
+            game_over = True
+                    
+            break
+
+        screen.fill(background_color)
+        if collision(player_pos,enemy_pos):
+            game_over = True
+            break
+
+
+        drop_enemies(enemy_list)
+        score =update_enemy_positions(enemy_list,score)
+        speed = set_level(score,speed)
+        
+        # showing score on screen
+        text = "Score: "+ str(score)
+        label = myfont.render(text,1,green)
+        screen.blit(label,(width-250,height-40))
+
+        if (collision_check(enemy_list,player_pos)):
+            
+        # when collision with enemy occurs
+                
+            crashed()
+            game_over = True
+
+            
+            
+            
+            break
+        draw_enemy(enemy_list)
+        # drawing playing
+        pygame.draw.rect(screen,gray,(player_pos[0],player_pos[1],player_size,player_size))
+        
+        # game speed
+        clock.tick(30)
+        #updating game screen
+        pygame.display.update()
+    print("Your Score is " + str(score))
+
+game_intro()
+game()
